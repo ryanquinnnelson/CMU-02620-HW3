@@ -190,10 +190,10 @@ def test__calculate_prob_Xk():
     all_sigma = [5.65, 3.5, 4.0675]
 
     k = 0
-    expected = np.array([0.0045847,
-                         0.00557011,
-                         0.00260219,
-                         0.0035157])
+    expected = np.array([[0.0045847],
+                         [0.00557011],
+                         [0.00260219],
+                         [0.0035157]])
     actual = em._calculate_prob_Xk(X, all_pi, all_mu, all_sigma, k)
     np.testing.assert_allclose(actual, expected, atol=1e-7)
 
@@ -216,10 +216,82 @@ def test___calculate_prob_X():
     all_sigma = [5.65, 3.5, 4.0675]
 
     # calculate expected probabilities
-    p_X = np.array([[0.0045847, 0.00557011, 0.00260219, 0.0035157],  # p(X|c=1)*p(c=1)
-                    [0.0028437, 0.01058452, 0.00337547, 0.00632877],  # p(X|c=2)*p(c=2)
-                    [0.00225323, 0.01306843, 0.01533292, 0.01755293]])  # p(X|c=3)*p(c=3)
+    all_prob = np.array([[0.0045847, 0.0028437, 0.00225323],
+                         [0.00557011, 0.01058452, 0.01306843],
+                         [0.00260219, 0.00337547, 0.01533292],
+                         [0.0035157, 0.00632877, 0.01755293]])
 
-    expected = np.sum(p_X, axis=0).reshape(-1, 1)
+    expected = np.sum(all_prob, axis=1).reshape(-1, 1)
     actual = em._calculate_prob_X(X, all_pi, all_mu, all_sigma)
     np.testing.assert_allclose(actual, expected, atol=1e-7)
+
+
+def test_calculate_log_likelihood():
+    X = np.array([[6, 4],
+                  [4, 1],
+                  [1, 2],
+                  [2, 1]])
+
+    # pi
+    all_pi = [0.25, 0.25, 0.5]
+
+    # mu
+    all_mu = [np.array([4.3, 2.6]),
+              np.array([3.9, 1.7]),
+              np.array([2.4, 1.85])]
+
+    # sigma
+    all_sigma = [5.65, 3.5, 4.0675]
+
+    # calculate expected probabilities
+    all_prob = np.array([[0.0045847, 0.0028437, 0.00225323],
+                         [0.00557011, 0.01058452, 0.01306843],
+                         [0.00260219, 0.00337547, 0.01533292],
+                         [0.0035157, 0.00632877, 0.01755293]])
+
+    p_X = np.sum(all_prob, axis=1).reshape(-1, 1)
+    log_p_X = np.log(p_X)
+    expected = np.sum(log_p_X, axis=0).item(0)
+    actual = em.calculate_log_likelihood(X, all_pi, all_mu, all_sigma)
+    np.testing.assert_allclose(actual, expected, atol=1e-7)
+
+
+def test_e_step():
+    X = np.array([[6, 4],
+                  [4, 1],
+                  [1, 2],
+                  [2, 1]])
+
+    # pi
+    all_pi = [0.25, 0.25, 0.5]
+
+    # mu
+    all_mu = [np.array([4.3, 2.6]),
+              np.array([3.9, 1.7]),
+              np.array([2.4, 1.85])]
+
+    # sigma
+    all_sigma = [5.65, 3.5, 4.0675]
+
+    # calculate expected probabilities
+    all_prob = np.array([[0.0045847, 0.0028437, 0.00225323],
+                         [0.00557011, 0.01058452, 0.01306843],
+                         [0.00260219, 0.00337547, 0.01533292],
+                         [0.0035157, 0.00632877, 0.01755293]])
+
+    p_X = np.sum(all_prob, axis=1).reshape(-1, 1)
+
+    expected_column_totals = np.array([[1.0],
+                                       [1.0],
+                                       [1.0],
+                                       [1.0]])
+    expected = np.array([[0.47354647, 0.29372146, 0.23273207],
+                         [0.19060674, 0.3621975, 0.44719575],
+                         [0.12210782, 0.15839415, 0.71949803],
+                         [0.12832233, 0.23099911, 0.64067856]])
+
+    actual = em.e_step(X, all_pi, all_mu, all_sigma)
+    np.testing.assert_allclose(actual, expected, atol=1e-16)
+
+    # ensure each row sums to 1.0
+    np.testing.assert_allclose(np.sum(actual, axis=1).reshape(-1, 1), expected_column_totals, atol=1e-16)
