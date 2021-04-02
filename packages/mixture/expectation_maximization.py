@@ -120,6 +120,7 @@ def _calculate_sigma_k(X, A, S, mu_k, k):
     return np.sum(X_corr * a_k, axis=0) / s_k
 
 
+# tested
 def m_step(X, A):
     """
     Performs MLE for parameter estimation using data and soft assignments.
