@@ -208,75 +208,99 @@ def m_step(X, A):
         all_sigma.append(sigma_k)
 
     return all_pi, all_mu, all_sigma
-#
-#
-# # tested
-# # ?? Do I sum up over all X^n here?
-# def _calculate_prob_Xk(X, all_pi, all_mu, all_sigma, k):
-#     mu_k = all_mu[k]
-#     sigma_k = all_sigma[k]
-#     pi_k = all_pi[k]
-#
-#     y = multivariate_normal.pdf(X, mean=mu_k, cov=sigma_k)
-#     p_Xk = y * pi_k
-#     return p_Xk.reshape(-1, 1)
-#
-#
-# # tested
-# def _calculate_prob_X(X, all_pi, all_mu, all_sigma):
-#     """
-#     Calculates P(X), the denominator in the inference equation. Uses the following formula:
-#
-#     P(X^n) = SUM_k=1^K p(X^n|c^n=k) * p(c^n=k)
-#
-#     :param X:
-#     :param all_pi:
-#     :param all_mu:
-#     :param all_sigma:
-#     :return:
-#     """
-#     N = len(X)
-#     K = len(all_pi)
-#     all_prob = np.zeros((N, K))
-#
-#     for k in range(K):
-#         prob_Xk = _calculate_prob_Xk(X, all_pi, all_mu, all_sigma, k)
-#         all_prob[:, k] = prob_Xk[:, 0]
-#     p_X = np.sum(all_prob, axis=1).reshape(-1, 1)
-#     return p_X
-#
-#
-# # tested
-# def calculate_log_likelihood(X, all_pi, all_mu, all_sigma):
-#     p_X = _calculate_prob_X(X, all_pi, all_mu, all_sigma)
-#     log_p_X = np.log(p_X)
-#     sum_p_X = np.sum(log_p_X,axis=0)
-#     return sum_p_X.item(0)
-#
-#
-# # tested
-# def e_step(X, all_pi, all_mu, all_sigma):
-#     """
-#     Infers soft assignments to each cluster for each sample.
-#
-#     :param X:
-#     :param all_pi:
-#     :param all_mu:
-#     :param all_sigma:
-#     :return:
-#     """
-#     p_X = _calculate_prob_X(X, all_pi, all_mu, all_sigma)
-#
-#     N = len(X)
-#     K = len(all_pi)
-#     A = np.zeros((N, K))
-#
-#     for k in range(K):
-#         p_Xk = _calculate_prob_Xk(X, all_pi, all_mu, all_sigma, k)
-#         a_k = p_Xk / p_X
-#         A[:, k] = a_k[:, 0]
-#
-#     return A
+
+
+# tested
+def _calculate_prob_Xk(X, all_pi, all_mu, all_sigma, k):
+    """
+    Calculates p(X,c=k) for all samples, where k is the cluster.
+
+    p(X,c=k) = p(X|c=k) * p(c=k)
+
+    :param X: N x J matrix, where N is the number of samples and J is the number of features per sample.
+    :param all_pi: List, pi parameters for all K clusters.
+    :param all_mu: List, mu parameters for all K clusters.
+    :param all_sigma: List, sigma parameters for all K clusters.
+    :param k: int, the kth cluster for which the parameter is being calculated. Zero-indexed.
+    :return: N x 1 array, represents probability of each sample X^n being in the kth cluster.
+    """
+    mu_k = all_mu[k]
+    sigma_k = all_sigma[k]
+    pi_k = all_pi[k]
+
+    y = multivariate_normal.pdf(X, mean=mu_k, cov=sigma_k)
+    p_Xk = y * pi_k
+    return p_Xk
+
+
+# tested
+def _calculate_prob_X(X, all_pi, all_mu, all_sigma):
+    """
+    Calculates p(X) for all samples. In other words, calculates the marginal probability of X.
+
+    p(X) = SUM_k=1^K p(X,c=k)
+    p(X) = SUM_k=1^K p(X|c=k) * p(c=k)
+
+    :param X: N x J matrix, where N is the number of samples and J is the number of features per sample.
+    :param all_pi: List, pi parameters for all K clusters.
+    :param all_mu: List, mu parameters for all K clusters.
+    :param all_sigma: List, sigma parameters for all K clusters.
+    :return: N x 1 array, represents probability of each sample X^n being in any cluster.
+    """
+    N = len(X)
+    K = len(all_pi)
+    all_prob = np.zeros((K, N))  # flips order of clusters and samples to make replacement and summation easy
+
+    # calculate probabilities for each cluster
+    for k in range(K):
+        prob_Xk = _calculate_prob_Xk(X, all_pi, all_mu, all_sigma, k)
+        all_prob[k] = prob_Xk
+
+    # sum probabilities across all clusters
+    p_X = np.sum(all_prob, axis=0).reshape(-1, 1)  # convert to column vector so rows represent samples
+    return p_X
+
+
+# tested
+def calculate_log_likelihood(X, all_pi, all_mu, all_sigma):
+    """
+    Calculates log likelihood for X given the parameters.
+
+    :param X: N x J matrix, where N is the number of samples and J is the number of features per sample.
+    :param all_pi: List, pi parameters for all K clusters.
+    :param all_mu: List, mu parameters for all K clusters.
+    :param all_sigma: List, sigma parameters for all K clusters.
+    :return: float, likelihood of data.
+    """
+    p_X = _calculate_prob_X(X, all_pi, all_mu, all_sigma)
+    log_p_X = np.log(p_X)
+    sum_p_X = np.sum(log_p_X, axis=0).item(0)
+    return sum_p_X
+
+
+# tested
+def e_step(X, all_pi, all_mu, all_sigma):
+    """
+    Infers soft assignments to each cluster for each sample.
+
+    :param X:
+    :param all_pi:
+    :param all_mu:
+    :param all_sigma:
+    :return:
+    """
+    p_X = _calculate_prob_X(X, all_pi, all_mu, all_sigma)
+
+    N = len(X)
+    K = len(all_pi)
+    A = np.zeros((N, K))
+
+    for k in range(K):
+        p_Xk = _calculate_prob_Xk(X, all_pi, all_mu, all_sigma, k)
+        a_k = p_Xk / p_X
+        A[:, k] = a_k[:, 0]
+
+    return A
 
 
 
