@@ -281,13 +281,15 @@ def calculate_log_likelihood(X, all_pi, all_mu, all_sigma):
 # tested
 def e_step(X, all_pi, all_mu, all_sigma):
     """
-    Infers soft assignments to each cluster for each sample.
+    Infers soft assignments for each sample for all clusters, given the parameters.
 
-    :param X:
-    :param all_pi:
-    :param all_mu:
-    :param all_sigma:
-    :return:
+    :param X: N x J matrix, where N is the number of samples and J is the number of features per sample.
+    :param all_pi: List, pi parameters for all K clusters.
+    :param all_mu: List, mu parameters for all K clusters.
+    :param all_sigma: List, sigma parameters for all K clusters.
+    :return: N x K matrix, where N is the number of samples and K is the number of clusters.
+            Represents the soft assignments for each cluster for all samples.
+            A[n][k] is the soft-assignment of the nth sample for the kth cluster.
     """
     p_X = _calculate_prob_X(X, all_pi, all_mu, all_sigma)
 
@@ -296,11 +298,8 @@ def e_step(X, all_pi, all_mu, all_sigma):
     A = np.zeros((N, K))
 
     for k in range(K):
-        p_Xk = _calculate_prob_Xk(X, all_pi, all_mu, all_sigma, k)
+        p_Xk = _calculate_prob_Xk(X, all_pi, all_mu, all_sigma, k).reshape(-1, 1)
         a_k = p_Xk / p_X
         A[:, k] = a_k[:, 0]
 
     return A
-
-
-
