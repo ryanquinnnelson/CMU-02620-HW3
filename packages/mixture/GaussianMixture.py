@@ -174,3 +174,101 @@ def _e_step(X, all_pi, all_mu, all_sigma):
         A[k] = a_k
 
     return A
+
+
+def _initialize_assignments(X, K):
+    N = len(X)
+    A_T = np.zero((K, N))
+
+    for k in range(K):
+        # generate random probabilities for each sample
+        p_ck = np.random.uniform(size=N)
+        A_T[k] = p_ck
+
+    return A_T.T
+
+
+def _predicted_cluster_changed(y_prev, y_curr):
+    cluster_changed = np.sum(y_prev - y_curr)
+    return cluster_changed == 0.0
+
+
+def _predict_clusters(A):
+    # get index (cluster) of highly probability assignment for each sample
+    predictions = np.argmax(A, axis=1)
+    return predictions
+
+
+def _calculate_log_likelihood(p_X):
+    log_p_X = np.log(p_X)
+    return np.sum(log_p_X)
+
+
+class GaussianMixture:
+
+    def __init__(self, k):
+        self.k = k
+
+    def fit(self, X):
+
+        A = _initialize_assignments(X, self.k)
+        y_prev = _predict_clusters(A)
+
+        prediction_changed = True
+        counter = 0
+        while prediction_changed:
+
+            # m step
+            all_pi, all_mu, all_sigma = _m_step(X, A)
+
+            # e step
+            A = _e_step(X, all_pi, all_mu, all_sigma)
+
+            # predict clusters
+            y_curr = _predict_clusters(A)
+
+            # check for convergence
+            prediction_changed = _predicted_cluster_changed(y_prev, y_curr)
+            if prediction_changed:
+                y_prev = y_curr  # save for next iteration
+                counter += 1
+
+            if counter > 100000:
+                break  # something is probably wrong
+
+        return self
+
+    def fit_and_score(self, X):
+
+        A = _initialize_assignments(X, self.k)
+        y_prev = _predict_clusters(A)
+
+        prediction_changed = True
+        counter = 0
+        log_likelihoods = []
+        while prediction_changed:
+
+            # m step
+            all_pi, all_mu, all_sigma = _m_step(X, A)
+
+            # e step
+            A = _e_step(X, all_pi, all_mu, all_sigma)
+
+            # predict clusters
+            y_curr = _predict_clusters(A)
+
+            # check for convergence
+            prediction_changed = _predicted_cluster_changed(y_prev, y_curr)
+            if prediction_changed:
+                y_prev = y_curr  # save for next iteration
+                counter += 1
+
+            if counter > 100000:
+                break  # something is probably wrong
+
+            # calculate score
+            p_X = _calculate_prob_X(X, all_pi, all_mu, all_sigma)
+            log_likelihood = _calculate_log_likelihood(p_X)
+            log_likelihoods.append(log_likelihood)
+
+        return log_likelihoods
