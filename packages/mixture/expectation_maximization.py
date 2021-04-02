@@ -5,7 +5,8 @@ import numpy as np
 from scipy.stats import multivariate_normal
 
 """
-Note 1 - Explanation of sigma_k calculation
+Note 1 - Explanation of sigma_k calculation in _calculate_sigma_k()
+-------------------------------------------------------------------
 The numerator in the formula for sigma_k is written as the sum of 
 p(c^N = k |X^n) * (X^n - mu_k)(X^n - mu_k)^T for each n in N samples. 
 
@@ -13,15 +14,23 @@ Taken as written, this tells us to perform a matrix multiplication for each of N
 However, it is possible to perform a single matrix multiplication over X and achieve the same result.
 This will be shown by arriving at the result via both strategies.
 
-X =  [[6 4]     mu_k = [4.3 2.6]   (X-mu_k)^T = [[ 1.7  1.4]     p(c=1|X) = [[0.5]
-      [4 1]                                      [-0.3 -1.6]                 [0.2]
-      [1 2]                                      [-3.3 -0.6]                 [0.1]
-      [2 1]]                                     [-2.3 -1.6]]                [0.2]]
+X =  [[6 4]     mu_k = [4.3 2.6]   (X-mu_k) = [[ 1.7  1.4]     p(c=1|X) = [[0.5]
+      [4 1]                                    [-0.3 -1.6]                 [0.2]
+      [1 2]                                    [-3.3 -0.6]                 [0.1]
+      [2 1]]                                   [-2.3 -1.6]]                [0.2]]
 
-Note that X1-mu_k results in a column vector. This ensures the multiplications produce a 2x2 matrix instead of a scalar.
+Note that individual X^n-mu_k calculations result in a column vector. This ensures the multiplications produce a 2x2 
+matrix instead of a scalar.
 
 X1-mu_k = [[6]   - [[4.3]   = [[1.7]
            [4]]     [2.6]]     [1.4]]
+           
+X2-mu_k = [[4]   - [[4.3]   = [[-0.3]
+           [1]]     [2.6]]     [-1.6]]
+           
+However, rows in X represent samples, so (X-mu_k) produces a matrix in which each row represents a sample. This makes it
+easy to multiplying p(x=1|X) * (X-mu_k), so this ordering is preserved even though it is the transpose of the results 
+if each sample was calculated separately. We reverse the transpose order in Strategy 2 to accommodate this.
 
 -----------------------------------------------------
 Strategy 1 - separate multiplications for each sample
@@ -44,9 +53,9 @@ Sum of the four matrices:
  [2.22 2.04]]
  
  
------------------------------------------------------
+----------------------------------
 Strategy 2 - single multiplication
------------------------------------------------------
+----------------------------------
 In this case, we can achieve the same result by multiplying p(c^n = k | X^n) * (X^n-mu_k) before performing a 
 matrix multiplication with (X^n-mu_k)^T:
 
@@ -56,10 +65,13 @@ p(c^n = k | X^n) * (X^n-mu_k) = [[0.5]  * [[ 1.7  1.4]  = [[ 0.85  0.7 ]
                                  [0.2]     [-3.3 -0.6]     [-0.33 -0.06]
                                  [0.1]]    [-2.3 -1.6]]    [-0.46 -0.32]]
 
-Note that we only multiply (X^n-mu_k), not both (X^n-mu_k) and (X^n-mu_k)^T.
-We transpose the result before multiplying by (X^n-mu_k)^T to achieve a 2 x 2 square matrix.
+Note that we only multiply (X^n-mu_k) by the probability, not both (X^n-mu_k) and (X^n-mu_k)^T. Remember from above - 
+because (X^n-mu_k) is really the transpose of the results we would get if we calculated each sample separately, we 
+transpose this term before multiplying by the second term to achieve a 2 x 2 square matrix. We don't take the transpose 
+of the second term for the same reason - the second term is already in the row-column order we would have achieved had
+we calculated each sample separately, combined the result, and then transposed.
 
-(p(c^n = k | X^n) * (X^n-mu_k)) (X^n-mu_k)^T = [[ 0.85 -0.06 -0.33 -0.46]   *   [[ 1.7  1.4]  =   [[3.61 2.22]
+(p(c^n = k | X^n) * (X^n-mu_k))^T (X^n-mu_k) = [[ 0.85 -0.06 -0.33 -0.46]   *   [[ 1.7  1.4]  =   [[3.61 2.22]
                                                 [ 0.7  -0.32 -0.06 -0.32]]       [-0.3 -1.6]       [2.22 2.04]]
                                                                                  [-3.3 -0.6] 
                                                                                  [-2.3 -1.6]]
@@ -69,7 +81,6 @@ Sum of the four matrices:
  
 The two results are exactly the same. Strategy 2 requires fewer calculations, so that is the one that is used.
 """
-
 
 
 # tested
@@ -165,7 +176,7 @@ def _calculate_sigma_k(X, A, S, mu_k, k):
     X_minus_mu_k = X - mu_k
     a_k = A[:, k].reshape(-1, 1)  # soft assignments for kth cluster
     s_k = S[k]  # sum of soft assignments for kth cluster
-    sigma_k = np.matmul((a_k * X_minus_mu_k).T, X_minus_mu_k) / s_k  # see Note 1 to explain calculation
+    sigma_k = np.matmul((a_k * X_minus_mu_k).T, X_minus_mu_k) / s_k  # see Note 1 for changes to original equation
     return sigma_k
 
 #
