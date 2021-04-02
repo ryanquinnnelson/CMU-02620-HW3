@@ -9,10 +9,12 @@ def _initialize_assignments(X, K):
     N = len(X)
     A_T = np.zeros((K, N))
 
-    for k in range(K):
+    for k in range(K-1):
         # generate random probabilities for each sample
         p_ck = np.random.uniform(size=N)
         A_T[k] = p_ck
+
+    # final kth cluster derived so every row adds up to 1.0
 
     return A_T.T
 
