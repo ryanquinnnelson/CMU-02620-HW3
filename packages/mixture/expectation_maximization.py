@@ -38,10 +38,12 @@ def _calculate_all_pi(A, S):
     :return: K x 1 array, where [k] is the pi parameter for cluster k
     """
     N = len(A)  # number of samples
-    return S / N
+    all_pi = S / N
+    return all_pi.tolist()
 
 
 # tested
+# ?? seems odd to get mu as a vector (not a scalar)
 def _calculate_mu_k(X, A, S, k):
     """
     Calculates mu parameter for cluster k. Uses the following formula for mu_k:
@@ -91,7 +93,7 @@ def _calculate_X_corr(X, mu_k):
 
 
 # tested
-# ?? seems odd to get sigma as a scalar
+# ?? seems odd to get sigma as a scalar (not a matrix)
 def _calculate_sigma_k(X, A, S, mu_k, k):
     """
     Calculates Sigma parameter for cluster k. Uses the following formula for sigma_k:
@@ -117,7 +119,9 @@ def _calculate_sigma_k(X, A, S, mu_k, k):
     a_k = A[:, k].reshape(-1, 1)
     s_k = S[k]
 
-    return np.sum(X_corr * a_k, axis=0) / s_k
+    sigma_k = np.sum(X_corr * a_k, axis=0) / s_k
+
+    return sigma_k.item(0)
 
 
 # tested
@@ -143,7 +147,17 @@ def m_step(X, A):
         sigma_k = _calculate_sigma_k(X, A, S, mu_k, k)
         all_sigma.append(sigma_k)
 
-    return all_pi.tolist(), all_mu, all_sigma
+    return all_pi, all_mu, all_sigma
+
+
+# tested
+def _calculate_prob_Xk(X, all_pi, all_mu, all_sigma, k):
+    mu_k = all_mu[k]
+    sigma_k = all_sigma[k]
+    pi_k = all_pi[k]
+
+    y = multivariate_normal.pdf(X, mean=mu_k, cov=sigma_k)
+    return y * pi_k
 
 
 def _calculate_prob_X(X, all_pi, all_mu, all_sigma):
@@ -161,52 +175,39 @@ def _calculate_prob_X(X, all_pi, all_mu, all_sigma):
     N = len(X)
     K = len(all_pi)
     all_prob = np.zeros((K, N))
-    for k in range(K):
-        mu_k = all_mu[k]
-        sigma_k = all_sigma[k]
-        pi_k = all_pi[k]
 
-        y = multivariate_normal.pdf(X, mean=mu_k, cov=sigma_k)
-        prob_Xk = y * pi_k
+    for k in range(K):
+        prob_Xk = _calculate_prob_Xk(X, all_pi, all_mu, all_sigma, k)
         all_prob[k] = prob_Xk
 
-    return np.sum(all_prob).reshape(-1, 1)
+    return np.sum(all_prob, axis=0).reshape(-1, 1)
 
-
-def _calculate_prob_Xk(X, all_pi, all_mu, all_sigma, k):
-    mu_k = all_mu[k]
-    sigma_k = all_sigma[k]
-    pi_k = all_pi[k]
-
-    y = multivariate_normal.pdf(X, mean=mu_k, cov=sigma_k)
-    return y * pi_k
-
-
-def e_step(X, all_pi, all_mu, all_sigma):
-    """
-    Infers soft assignments to each cluster for each sample.
-
-    :param X:
-    :param all_pi:
-    :param all_mu:
-    :param all_sigma:
-    :return:
-    """
-    p_X = _calculate_prob_X(X, all_pi, all_mu, all_sigma)
-
-    N = len(X)
-    K = len(all_pi)
-    A = np.zeros((N, K))
-
-    for k in range(K):
-        p_Xk = _calculate_prob_Xk(X, all_pi, all_mu, all_sigma, k)
-        a_k = p_Xk / p_X
-        A[k] = a_k
-
-    return A
-
-
-def _calculate_log_likelihood(X, all_pi, all_mu, all_sigma):
-    p_X = _calculate_prob_X(X, all_pi, all_mu, all_sigma)
-    log_p_X = np.log(p_X)
-    return np.sum(log_p_X)
+#
+# def e_step(X, all_pi, all_mu, all_sigma):
+#     """
+#     Infers soft assignments to each cluster for each sample.
+#
+#     :param X:
+#     :param all_pi:
+#     :param all_mu:
+#     :param all_sigma:
+#     :return:
+#     """
+#     p_X = _calculate_prob_X(X, all_pi, all_mu, all_sigma)
+#
+#     N = len(X)
+#     K = len(all_pi)
+#     A = np.zeros((N, K))
+#
+#     for k in range(K):
+#         p_Xk = _calculate_prob_Xk(X, all_pi, all_mu, all_sigma, k)
+#         a_k = p_Xk / p_X
+#         A[k] = a_k
+#
+#     return A
+#
+#
+# def _calculate_log_likelihood(X, all_pi, all_mu, all_sigma):
+#     p_X = _calculate_prob_X(X, all_pi, all_mu, all_sigma)
+#     log_p_X = np.log(p_X)
+#     return np.sum(log_p_X)
