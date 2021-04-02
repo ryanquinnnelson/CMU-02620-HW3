@@ -5,6 +5,7 @@ import numpy as np
 from scipy.stats import multivariate_normal
 
 
+# tested
 def _sum_soft_assignments(A):
     """
     Sums the soft assignment values for all samples for each cluster.
@@ -13,9 +14,10 @@ def _sum_soft_assignments(A):
             assignments[n][k] contains the soft-assignment of the nth sample for the kth cluster
     :return: K x 1 array, where [k] is the sum of all soft assignments for the kth cluster
     """
-    return np.sum(A)
+    return np.sum(A, axis=0)
 
 
+# tested
 def _calculate_all_pi(A, S):
     """
     Calculates pi parameter for all K clusters simultaneously.
@@ -39,6 +41,7 @@ def _calculate_all_pi(A, S):
     return S / N
 
 
+# tested
 def _calculate_mu_k(X, A, S, k):
     """
     Calculates mu parameter for cluster k. Uses the following formula for mu_k:
@@ -58,11 +61,37 @@ def _calculate_mu_k(X, A, S, k):
     :param k: kth cluster, represents cluster for which parameter is being calculated
     :return: J x 1 array
     """
-    a_k = A[:, k]  # soft assignments for kth cluster
+    a_k = A[:, k].reshape(-1, 1)  # soft assignments for kth cluster
     s_k = S[k]  # sum of soft assignments for kth cluster
-    return X * a_k / s_k
+    return np.sum(X * a_k, axis=0) / s_k
 
 
+# tested
+def _calculate_X_corr(X, mu_k):
+    """
+    (X^n - mu_k)(X^n - mu_k)^T
+
+    This implementation takes advantage of the fact that (X^n - mu_k)(X^n - mu_k)^T is the same as squaring each
+    dimension of the row vector then adding all terms together:
+
+    Example:
+    Assume (X^n - mu_k) = | 1.7 | -0.3 |
+
+    | 1.7 | -0.3 |  x  |  1.7 |  = (1.7 * 1.7) + (-0.3 * -0.3) = 2.98
+                       | -0.3 |
+
+    The function does this for all X^n in parallel.
+
+    :param X:
+    :param mu_k:
+    :return:
+    """
+    X_corr = X - mu_k
+    return np.sum(np.square(X_corr), axis=1).reshape(-1, 1)
+
+
+# tested
+# ?? seems odd to get sigma as a scalar
 def _calculate_sigma_k(X, A, S, mu_k, k):
     """
     Calculates Sigma parameter for cluster k. Uses the following formula for sigma_k:
@@ -84,11 +113,11 @@ def _calculate_sigma_k(X, A, S, mu_k, k):
     :param k: kth cluster, represents cluster for which parameter is being calculated
     :return: N x N matrix
     """
-    d_k = X - mu_k
-    a_k = A[:, k]
+    X_corr = _calculate_X_corr(X, mu_k)
+    a_k = A[:, k].reshape(-1, 1)
     s_k = S[k]
 
-    return d_k * d_k.T * a_k / s_k
+    return np.sum(X_corr * a_k, axis=0) / s_k
 
 
 def m_step(X, A):
