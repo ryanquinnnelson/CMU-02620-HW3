@@ -120,47 +120,52 @@ def test__calculate_sigma_k_2():
     actual = em._calculate_sigma_k(X, A, S, mu_k, k)
     np.testing.assert_allclose(actual, expected, atol=1e-16)
 
-#
-# def test_m_step():
-#     A = np.array([[0.5, 0.2, 0.3],
-#                   [0.2, 0.6, 0.2],
-#                   [0.1, 0.1, 0.8],
-#                   [0.2, 0.1, 0.7]])
-#
-#     X = np.array([[6, 4],
-#                   [4, 1],
-#                   [1, 2],
-#                   [2, 1]])
-#     # pi
-#     expected_pi = [0.25, 0.25, 0.5]
-#
-#     # mu
-#     expected_mu = [np.array([4.3, 2.6]),
-#                    np.array([3.9, 1.7]),
-#                    np.array([2.4, 1.85])]
-#
-#     # sigma
-#     expected_sigma = [5.65, 3.5, 4.0675]
-#
-#     # actual results
-#     actual_pi, actual_mu, actual_sigma = em.m_step(X, A)
-#
-#     # confirm results match expectation
-#     for k in range(3):
-#         # pi
-#         actual_pi_k = actual_pi[k]
-#         expected_pi_k = expected_pi[k]
-#         assert actual_pi_k == expected_pi_k
-#
-#         # mu
-#         actual_mu_k = actual_mu[k]
-#         expected_mu_k = expected_mu[k]
-#         np.testing.assert_allclose(actual_mu_k, expected_mu_k, atol=1e-16)
-#
-#         # sigma
-#         actual_sigma_k = actual_sigma[k]
-#         expected_sigma_k = expected_sigma[k]
-#         np.testing.assert_allclose(actual_sigma_k, expected_sigma_k, atol=1e-16)
+
+def test_m_step():
+    A = np.array([[0.5, 0.2, 0.3],
+                  [0.2, 0.6, 0.2],
+                  [0.1, 0.1, 0.8],
+                  [0.2, 0.1, 0.7]])
+
+    X = np.array([[6, 4],
+                  [4, 1],
+                  [1, 2],
+                  [2, 1]])
+    # pi
+    expected_pi = [0.25, 0.25, 0.5]
+
+    # mu
+    expected_mu = [np.array([4.3, 2.6]),
+                   np.array([3.9, 1.7]),
+                   np.array([2.4, 1.85])]
+
+    # sigma
+    expected_sigma = [np.array([[3.61, 2.22],
+                                [2.22, 2.04]]),
+                      np.array([[2.09, 0.97],
+                                [0.97, 1.41]]),
+                      np.array([[3.04, 1.06],
+                                [1.06, 1.0275]])]
+
+    # actual results
+    actual_pi, actual_mu, actual_sigma = em.m_step(X, A)
+
+    # confirm results match expectation
+    for k in range(3):
+        # pi
+        actual_pi_k = actual_pi[k]
+        expected_pi_k = expected_pi[k]
+        assert actual_pi_k == expected_pi_k
+
+        # mu
+        actual_mu_k = actual_mu[k]
+        expected_mu_k = expected_mu[k]
+        np.testing.assert_allclose(actual_mu_k, expected_mu_k, atol=1e-16)
+
+        # sigma
+        actual_sigma_k = actual_sigma[k]
+        expected_sigma_k = expected_sigma[k]
+        np.testing.assert_allclose(actual_sigma_k, expected_sigma_k, atol=1e-16)
 #
 #
 # def test__calculate_prob_Xk():

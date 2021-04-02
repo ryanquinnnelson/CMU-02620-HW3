@@ -179,31 +179,35 @@ def _calculate_sigma_k(X, A, S, mu_k, k):
     sigma_k = np.matmul((a_k * X_minus_mu_k).T, X_minus_mu_k) / s_k  # see Note 1 for changes to original equation
     return sigma_k
 
-#
-# # tested
-# def m_step(X, A):
-#     """
-#     Performs MLE for parameter estimation using data and soft assignments.
-#
-#     :param X: N x J matrix, where N is the number of samples and J is the number of features per sample
-#     :param A: N x K matrix, where K is the number of clusters
-#     :return: (list, list, list) Tuple representing ( pi, mu, sigma) parameters for all K clusters.
-#     """
-#     S = _sum_soft_assignments(A)  # used multiple times so calculated separately
-#     K = len(S)
-#
-#     all_pi = _calculate_all_pi(A, S)
-#     all_mu = []
-#     all_sigma = []
-#
-#     for k in range(K):
-#         mu_k = _calculate_mu_k(X, A, S, k)
-#         all_mu.append(mu_k)
-#
-#         sigma_k = _calculate_sigma_k(X, A, S, mu_k, k)
-#         all_sigma.append(sigma_k)
-#
-#     return all_pi, all_mu, all_sigma
+
+# tested
+def m_step(X, A):
+    """
+    Performs MLE for parameter estimation using data and current soft assignments.
+    Calculates the pi, mu, sigma parameters for all K clusters.
+
+    :param X: N x J matrix, where N is the number of samples and J is the number of features per sample.
+    :param A: N x K matrix, where N is the number of samples and K is the number of clusters.
+            Represents the soft assignments for each cluster for all samples.
+            A[n][k] is the soft-assignment of the nth sample for the kth cluster.
+    :return: (List, List, List) Tuple representing ( pi, mu, sigma) parameters for all K clusters.
+            list[k] is the kth parameter for the given parameter.
+    """
+    S = _sum_soft_assignments(A)  # used multiple times so calculated separately
+    K = len(S)
+
+    all_pi = _calculate_all_pi(A, S)
+    all_mu = []
+    all_sigma = []
+
+    for k in range(K):
+        mu_k = _calculate_mu_k(X, A, S, k)
+        all_mu.append(mu_k)
+
+        sigma_k = _calculate_sigma_k(X, A, S, mu_k, k)
+        all_sigma.append(sigma_k)
+
+    return all_pi, all_mu, all_sigma
 #
 #
 # # tested
