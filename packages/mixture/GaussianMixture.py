@@ -7,7 +7,7 @@ from packages.mixture import expectation_maximization as em
 
 def _initialize_assignments(X, K):
     N = len(X)
-    A_T = np.zero((K, N))
+    A_T = np.zeros((K, N))
 
     for k in range(K):
         # generate random probabilities for each sample
@@ -17,12 +17,12 @@ def _initialize_assignments(X, K):
     return A_T.T
 
 
-def _predicted_cluster_changed(y_prev, y_curr):
-    cluster_changed = np.sum(y_prev - y_curr)
+def _assignments_changed(y_prev, y_curr):
+    cluster_changed = np.sum(y_prev - y_curr, axis=0)
     return cluster_changed == 0.0
 
 
-def _predict_clusters(A):
+def _assign_clusters(A):
     # get index (cluster) of highly probability assignment for each sample
     predictions = np.argmax(A, axis=1)
     return predictions
@@ -36,11 +36,11 @@ class GaussianMixture:
     def fit(self, X):
 
         A = _initialize_assignments(X, self.k)
-        y_prev = _predict_clusters(A)
+        y_prev = _assign_clusters(A)
 
-        prediction_changed = True
+        assignments_changed = True
         counter = 0
-        while prediction_changed:
+        while assignments_changed:
 
             # m step
             all_pi, all_mu, all_sigma = em.m_step(X, A)
@@ -48,12 +48,14 @@ class GaussianMixture:
             # e step
             A = em.e_step(X, all_pi, all_mu, all_sigma)
 
-            # predict clusters
-            y_curr = _predict_clusters(A)
+            # assign clusters
+            y_curr = _assign_clusters(A)
 
             # check for convergence
-            prediction_changed = _predicted_cluster_changed(y_prev, y_curr)
-            if prediction_changed:
+            assignments_changed = _assignments_changed(y_prev, y_curr)
+
+            # cleanup steps
+            if assignments_changed:
                 y_prev = y_curr  # save for next iteration
                 counter += 1
 
@@ -65,7 +67,7 @@ class GaussianMixture:
     def fit_and_score(self, X):
 
         A = _initialize_assignments(X, self.k)
-        y_prev = _predict_clusters(A)
+        y_prev = _assign_clusters(A)
 
         prediction_changed = True
         counter = 0
@@ -79,10 +81,10 @@ class GaussianMixture:
             A = em.e_step(X, all_pi, all_mu, all_sigma)
 
             # predict clusters
-            y_curr = _predict_clusters(A)
+            y_curr = _assign_clusters(A)
 
             # check for convergence
-            prediction_changed = _predicted_cluster_changed(y_prev, y_curr)
+            prediction_changed = _assignments_changed(y_prev, y_curr)
             if prediction_changed:
                 y_prev = y_curr  # save for next iteration
                 counter += 1
