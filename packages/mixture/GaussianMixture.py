@@ -118,6 +118,9 @@ def _initialize_parameters(X, A, pi_init, mu_init, sigma_init):
 
 
 class GaussianMixture:
+    """
+    Defines a Gaussian Mixture model using Expectation-Maximization.
+    """
 
     def __init__(self, K, epsilon, pi_init=None, mu_init=None, sigma_init=None, A_init=None):
         """
@@ -126,10 +129,12 @@ class GaussianMixture:
         :param K: int, number of clusters in model.
         :param epsilon: float, difference threshold for convergence calculation. Convergence is defined as the point
                         at which the difference in the objective function between iterations is less than epsilon.
-        :param pi_init:
-        :param mu_init:
-        :param sigma_init:
-        :param A_init:
+        :param pi_init: List, initial mixing proportions to use. Length must match K.
+        :param mu_init: List, initial means of the mixture components to use. Length must match K, and dimension of
+                        each mean must match the dimension of X.
+        :param sigma_init: List, initial covariance of the mixture components to use. Length must match K, and the
+                        dimension of covariance matrix must match the dimension of X.
+        :param A_init: K x 1 array or N x K matrix, initial soft assignments to use.
         """
         self.K = K
         self.epsilon = epsilon
@@ -143,9 +148,10 @@ class GaussianMixture:
 
     def fit_and_score(self, X):
         """
+        Estimates optimal model parameters for the given data and tracks objective score. Uses Expectation-Maximization.
 
-        :param X:
-        :return:
+        :param X: N x J matrix, where N is the number of samples and J is the number of features per sample.
+        :return: List, objective score calculated after every iteration.
         """
 
         # initialization
@@ -191,13 +197,22 @@ class GaussianMixture:
 
     def fit(self, X):
         """
+        Estimates optimal model parameters for the given data. Uses Expectation-Maximization.
 
-        :param X:
-        :return:
+        :param X: N x J matrix, where N is the number of samples and J is the number of features per sample.
+        :return: None
         """
         self.fit_and_score(X)
         return self
 
     def predict_proba(self, X):
+        """
+        Predicts soft-assignment for each sample using a fit model.
+
+        :param X: N x J matrix, where N is the number of samples and J is the number of features per sample.
+        :return: N x K matrix, where N is the number of samples and K is the number of clusters.
+             Represents the soft assignments for each cluster for all samples.
+             A[n][k] is the soft-assignment of the nth sample for the kth cluster.
+        """
         A = em.e_step(X, self.pi, self.mu, self.sigma)
         return A

@@ -230,7 +230,6 @@ def test_fit_and_score():
 
 
 def test_predict_proba__multiple_samples():
-
     X = np.array([[6, 4],
                   [4, 1]])
 
@@ -250,8 +249,8 @@ def test_predict_proba__multiple_samples():
                  np.array([[3.04, 1.06],
                            [1.06, 1.0275]])]
 
-    expected = np.array([[1,1,1],
-                         [1,1,1]])
+    expected = np.array([[0.673339, 0.169474, 0.157187],
+                         [0.163652, 0.601457, 0.234891]])
 
     model = gm.GaussianMixture(K=3, epsilon=1e-3)
     model.pi = all_pi
@@ -259,4 +258,34 @@ def test_predict_proba__multiple_samples():
     model.sigma = all_sigma
 
     actual = model.predict_proba(X)
-    assert actual.shape == (2,3)
+    np.testing.assert_allclose(actual, expected, atol=1e-6)
+
+
+def test_predict_proba__single_samples():
+    X = np.array([[6, 4]])
+
+    # pi
+    all_pi = [0.25, 0.25, 0.5]
+
+    # mu
+    all_mu = [np.array([4.3, 2.6]),
+              np.array([3.9, 1.7]),
+              np.array([2.4, 1.85])]
+
+    # sigma
+    all_sigma = [np.array([[3.61, 2.22],
+                           [2.22, 2.04]]),
+                 np.array([[2.09, 0.97],
+                           [0.97, 1.41]]),
+                 np.array([[3.04, 1.06],
+                           [1.06, 1.0275]])]
+
+    expected = np.array([[0.673339, 0.169474, 0.157187]])
+
+    model = gm.GaussianMixture(K=3, epsilon=1e-3)
+    model.pi = all_pi
+    model.mu = all_mu
+    model.sigma = all_sigma
+
+    actual = model.predict_proba(X)
+    np.testing.assert_allclose(actual, expected, atol=1e-6)
