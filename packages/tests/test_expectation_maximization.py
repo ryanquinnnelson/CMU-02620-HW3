@@ -1,5 +1,6 @@
 from packages.mixture import expectation_maximization as em
 import numpy as np
+import pytest
 
 
 def test__sum_soft_assignments():
@@ -292,9 +293,9 @@ def test_e_step():
 
     p_X = np.sum(all_prob, axis=0).reshape(-1, 1)
 
-    expected_k0 = all_prob[0].reshape(-1, 1) / p_X
-    expected_k1 = all_prob[1].reshape(-1, 1) / p_X
-    expected_k2 = all_prob[2].reshape(-1, 1) / p_X
+    expected_k0 = np.round(all_prob[0].reshape(-1, 1) / p_X, decimals=5)
+    expected_k1 = np.round(all_prob[1].reshape(-1, 1) / p_X, decimals=5)
+    expected_k2 = np.round(all_prob[2].reshape(-1, 1) / p_X, decimals=5)
     expected = np.concatenate([expected_k0, expected_k1, expected_k2], axis=1)
 
     actual = em.e_step(X, all_pi, all_mu, all_sigma)
@@ -306,3 +307,36 @@ def test_e_step():
                                        [1.0],
                                        [1.0]])
     np.testing.assert_allclose(np.sum(actual, axis=1).reshape(-1, 1), expected_column_totals, atol=1e-16)
+
+
+def test__check_valid_assignment__success():
+    A = np.array([[0.36007, 0.00284, 0.63709],
+                  [0.17928, 0.58114, 0.23958],
+                  [0.15136, 0.38740, 0.46124],
+                  [0.20585, 0.41395, 0.38020]])
+
+    em._check_valid_assignment(A)
+
+
+def test__check_valid_assignment__failure():
+    A = np.array([[0.36006613, 0.1, 0.63709776],
+                  [0.17927669, 0.58113916, 0.23958415],
+                  [0.15136286, 0.38740025, 0.4612369],
+                  [0.20584788, 0.41394991, 0.38020221]])
+
+    with pytest.raises(AssertionError):
+        em._check_valid_assignment(A)
+
+
+def test__round_assignments():
+    A = np.array([[0.36006613, 0.00283611, 0.63709776],
+                  [0.17927669, 0.58113916, 0.23958415],
+                  [0.15136286, 0.38740025, 0.4612369],
+                  [0.20584788, 0.41394991, 0.38020221]])
+
+    expected = np.array([[0.36007, 0.00284, 0.63709],
+                  [0.17928, 0.58114, 0.23958],
+                  [0.15136, 0.38740, 0.46124],
+                  [0.20585, 0.41395, 0.38020]])
+    actual = em._round_assignments(A)
+    np.testing.assert_allclose(actual, expected, atol=1e-16)
