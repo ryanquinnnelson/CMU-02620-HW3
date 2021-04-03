@@ -52,7 +52,8 @@ class GaussianMixture:
         self.mu = None
         self.sigma = None
 
-    def fit(self, X):
+    def fit_and_score(self,X):
+        scores = []
 
         A = _initialize_assignments(X, self.K)
 
@@ -61,6 +62,7 @@ class GaussianMixture:
 
         # calculate difference between previous and current objective values
         prev_objective = em.calculate_log_likelihood(X, all_pi, all_mu, all_sigma)
+        scores.append(prev_objective)
 
         diff = self.epsilon  # to enter the while loop
         counter = 0
@@ -74,6 +76,7 @@ class GaussianMixture:
 
             # calculate difference between previous and current objective values
             curr_objective = em.calculate_log_likelihood(X, all_pi, all_mu, all_sigma)
+            scores.append(curr_objective)
             diff = np.abs(curr_objective - prev_objective)
 
             # take actions depending on whether there will be another round
@@ -81,7 +84,7 @@ class GaussianMixture:
                 prev_objective = curr_objective  # save for next round
                 counter += 1
 
-            if counter > 100000:
+            if counter > 10000:
                 raise ValueError('Model took too many iterations to converge:', counter)  # something is wrong
 
         # model converged, save parameters
@@ -90,4 +93,8 @@ class GaussianMixture:
         self.sigma = all_sigma
 
         print(counter)  # for fun, see how many iterations it took to converge
+        return scores
+
+    def fit(self, X):
+        self.fit_and_score(X)
         return self

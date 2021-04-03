@@ -54,6 +54,22 @@ def test_fit():
     assert len(model.sigma) == 3
 
 
+def test_fit_and_score():
 
+    K = 3
+    epsilon = 1e-1
+
+    model = gm.GaussianMixture(K, epsilon)
+
+    X = np.array([[6, 4],
+                  [4, 1],
+                  [1, 2],
+                  [2, 1]])
+
+    scores = model.fit_and_score(X)
+    assert len(model.pi) == 3
+    assert len(model.mu) == 3
+    assert len(model.sigma) == 3
+    assert len(scores) > 0
 
 

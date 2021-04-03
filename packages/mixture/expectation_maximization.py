@@ -233,10 +233,10 @@ def _calculate_prob_Xk(X, all_pi, all_mu, all_sigma, k):
     sigma_k = all_sigma[k]
     pi_k = all_pi[k]
 
-    # # https://stackoverflow.com/questions/41515522/numpy-positive-semi-definite-warning
-    # min_eig = np.min(np.real(np.linalg.eigvals(sigma_k)))
-    # if min_eig < 0:
-    #     sigma_k -= 10 * min_eig * np.eye(*sigma_k.shape)
+    # https://stackoverflow.com/questions/41515522/numpy-positive-semi-definite-warning
+    min_eig = np.min(np.real(np.linalg.eigvals(sigma_k)))
+    if min_eig < 0:
+        sigma_k -= 10 * min_eig * np.eye(*sigma_k.shape)
 
     y = multivariate_normal.pdf(X, mean=mu_k, cov=sigma_k, allow_singular=True)  # getting issues with singular matrix
     p_Xk = y * pi_k
