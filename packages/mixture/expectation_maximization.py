@@ -171,30 +171,30 @@ def _calculate_mu_k(X, A, S, k):
     return mu_k
 
 
-def _calculate_sigma_k(X, A, S, mu_k, k):
-    """
-    Version that avoids the extra efficiency in case there was an issue with it.
-
-    :param X:
-    :param A:
-    :param S:
-    :param mu_k:
-    :param k:
-    :return:
-    """
-    N = len(X)
-
-    total = np.zeros((len(mu_k), len(mu_k)))
-    for n in range(N):
-        a_nk = A[n, k]
-
-        X_minus_mu_k = (X[n] - mu_k).reshape(-1, 1)
-        result = np.matmul(X_minus_mu_k, X_minus_mu_k.T) * a_nk
-        total += result
-
-    s_k = S[k]
-    return total / s_k
-
+# def _calculate_sigma_k(X, A, S, mu_k, k):
+#     """
+#     Version that avoids the extra efficiency in case there was an issue with it.
+#
+#     :param X:
+#     :param A:
+#     :param S:
+#     :param mu_k:
+#     :param k:
+#     :return:
+#     """
+#     N = len(X)
+#
+#     total = np.zeros((len(mu_k), len(mu_k)))
+#     for n in range(N):
+#         a_nk = A[n, k]
+#
+#         X_minus_mu_k = (X[n] - mu_k).reshape(-1, 1)
+#         result = np.matmul(X_minus_mu_k, X_minus_mu_k.T) * a_nk
+#         total += result
+#
+#     s_k = S[k]
+#     return total / s_k
+#
 
 # tested
 def _calculate_sigma_k2(X, A, S, mu_k, k):
