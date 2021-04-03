@@ -191,8 +191,7 @@ class GaussianMixture:
         self.pi = all_pi
         self.mu = all_mu
         self.sigma = all_sigma
-
-        print(counter)  # for fun, number of iterations it took to converge
+        
         return scores
 
     def fit(self, X):
