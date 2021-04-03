@@ -202,7 +202,15 @@ def _calculate_sigma_k2(X, A, S, mu_k, k):
     a_k = A[:, k].reshape(-1, 1)  # soft assignments for kth cluster
     s_k = S[k]  # sum of soft assignments for kth cluster
     sigma_k = np.matmul((a_k * X_minus_mu_k).T, X_minus_mu_k) / s_k  # see Note 1 for changes to original equation
-    return sigma_k
+
+    # https://stats.stackexchange.com/questions/219302/singularity-issues-in-gaussian-mixture-model/359730#359730
+    # add small value to diagonal to prevent singular matrix
+    diag = np.zeros((len(mu_k), len(mu_k)))
+    np.fill_diagonal(diag, 1e-6)  # same correction amount as sklearn version
+
+    sigma_k_corrected = sigma_k + diag
+
+    return sigma_k_corrected
 
 
 # tested
@@ -229,7 +237,7 @@ def m_step(X, A):
         mu_k = _calculate_mu_k(X, A, S, k)
         all_mu.append(mu_k)
 
-        sigma_k = _calculate_sigma_k(X, A, S, mu_k, k)
+        sigma_k = _calculate_sigma_k2(X, A, S, mu_k, k)
         all_sigma.append(sigma_k)
 
     return all_pi, all_mu, all_sigma
@@ -252,11 +260,6 @@ def _calculate_prob_Xk(X, all_pi, all_mu, all_sigma, k):
     mu_k = all_mu[k]
     sigma_k = all_sigma[k]
     pi_k = all_pi[k]
-
-    # # https://stackoverflow.com/questions/41515522/numpy-positive-semi-definite-warning
-    # min_eig = np.min(np.real(np.linalg.eigvals(sigma_k)))
-    # if min_eig < 0:
-    #     sigma_k -= 10 * min_eig * np.eye(*sigma_k.shape)
 
     y = multivariate_normal.pdf(X, mean=mu_k, cov=sigma_k) #, allow_singular=True)  # getting issues with singular matrix
     p_Xk = y * pi_k

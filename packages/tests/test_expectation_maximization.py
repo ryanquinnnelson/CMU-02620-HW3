@@ -77,8 +77,8 @@ def test__calculate_sigma_k2__0():
     mu_k = np.array([4.3, 2.6])
     k = 0
 
-    expected = np.array([[3.61, 2.22],
-                         [2.22, 2.04]])
+    expected = np.array([[3.610001, 2.22],
+                         [2.22, 2.040001]])
     actual = em._calculate_sigma_k2(X, A, S, mu_k, k)
     np.testing.assert_allclose(actual, expected, atol=1e-16)
 
@@ -97,8 +97,8 @@ def test__calculate_sigma_k2__1():
     mu_k = np.array([3.9, 1.7])
     k = 1
 
-    expected = np.array([[2.09, 0.97],
-                         [0.97, 1.41]])
+    expected = np.array([[2.090001, 0.97],
+                         [0.97, 1.410001]])
     actual = em._calculate_sigma_k2(X, A, S, mu_k, k)
     np.testing.assert_allclose(actual, expected, atol=1e-16)
 
@@ -117,32 +117,31 @@ def test__calculate_sigma_k2__2():
     mu_k = np.array([2.4, 1.85])
     k = 2
 
-    expected = np.array([[3.04, 1.06],
-                         [1.06, 1.0275]])
+    expected = np.array([[3.040001, 1.06],
+                         [1.06, 1.027501]])
     actual = em._calculate_sigma_k2(X, A, S, mu_k, k)
     np.testing.assert_allclose(actual, expected, atol=1e-16)
 
-def test__calculate_sigma_k__0():
-    A = np.array([[0.5, 0.2, 0.3],
-                  [0.2, 0.6, 0.2],
-                  [0.1, 0.1, 0.8],
-                  [0.2, 0.1, 0.7]])
-    S = np.array([1.0, 1.0, 2.0])
 
-    X = np.array([[6, 4],
-                  [4, 1],
-                  [1, 2],
-                  [2, 1]])
-    mu_k = np.array([4.3, 2.6])
-    k = 0
-
-    expected = np.array([[3.61, 2.22],
-                         [2.22, 2.04]])
-    actual = em._calculate_sigma_k(X, A, S, mu_k, k)
-    np.testing.assert_allclose(actual, expected, atol=1e-16)
-
-
-
+#
+# def test__calculate_sigma_k__0():
+#     A = np.array([[0.5, 0.2, 0.3],
+#                   [0.2, 0.6, 0.2],
+#                   [0.1, 0.1, 0.8],
+#                   [0.2, 0.1, 0.7]])
+#     S = np.array([1.0, 1.0, 2.0])
+#
+#     X = np.array([[6, 4],
+#                   [4, 1],
+#                   [1, 2],
+#                   [2, 1]])
+#     mu_k = np.array([4.3, 2.6])
+#     k = 0
+#
+#     expected = np.array([[3.61, 2.22],
+#                          [2.22, 2.04]])
+#     actual = em._calculate_sigma_k(X, A, S, mu_k, k)
+#     np.testing.assert_allclose(actual, expected, atol=1e-16)
 
 
 def test_m_step():
@@ -164,12 +163,12 @@ def test_m_step():
                    np.array([2.4, 1.85])]
 
     # sigma
-    expected_sigma = [np.array([[3.61, 2.22],
-                                [2.22, 2.04]]),
-                      np.array([[2.09, 0.97],
-                                [0.97, 1.41]]),
-                      np.array([[3.04, 1.06],
-                                [1.06, 1.0275]])]
+    expected_sigma = [np.array([[3.610001, 2.22],
+                                [2.22, 2.040001]]),
+                      np.array([[2.090001, 0.97],
+                                [0.97, 1.410001]]),
+                      np.array([[3.040001, 1.06],
+                                [1.06, 1.027501]])]
 
     # actual results
     actual_pi, actual_mu, actual_sigma = em.m_step(X, A)
@@ -330,7 +329,6 @@ def test_e_step():
                                        [1.0],
                                        [1.0]])
     np.testing.assert_allclose(np.sum(actual, axis=1).reshape(-1, 1), expected_column_totals, atol=1e-16)
-
 
 # def test__check_valid_assignment__success():
 #     A = np.array([[0.36007, 0.00284, 0.63709],
