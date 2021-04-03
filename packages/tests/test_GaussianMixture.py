@@ -3,7 +3,6 @@ from packages.mixture import GaussianMixture as gm
 
 
 def test__initialize_assignments():
-
     X = np.array([[6, 4],
                   [4, 1],
                   [1, 2],
@@ -23,7 +22,6 @@ def test__initialize_assignments():
 
 
 def test___init__():
-
     K = 3
     epsilon = 1e-3
 
@@ -37,7 +35,6 @@ def test___init__():
 
 
 def test_fit():
-
     K = 3
     epsilon = 1e-1
 
@@ -55,7 +52,6 @@ def test_fit():
 
 
 def test_fit_and_score():
-
     K = 3
     epsilon = 1e-1
 
@@ -71,5 +67,3 @@ def test_fit_and_score():
     assert len(model.mu) == 3
     assert len(model.sigma) == 3
     assert len(scores) > 0
-
-

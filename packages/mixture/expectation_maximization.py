@@ -82,6 +82,28 @@ Sum of the four matrices:
 The two results are exactly the same. Strategy 2 requires fewer calculations, so that is the one that is used.
 """
 
+"""
+Note 2 - Why a correction is added to the diagonal of the covariance matrix
+After an arbitrary number of E-M iterations, with high probability one of the sigma_k covariance matrices would 
+throw a "singular matrix" error when it was used in the multivariate pdf function. The following source explains what 
+the problem is and how to correct for it. (Even sklearn performs this correction.) Text is copied here in case original 
+source is deleted. 
+ 
+"...we have seen that the covariance matrix is singular if it is the 0 matrix."
+
+"First of all, we get this 0 covariance matrix above if the Multivariate Gaussian falls into one point during the 
+iteration between the E and M step. This could happen if we have for instance a dataset to which we want to fit 3 
+gaussians but which actually consists only of two classes (clusters) such that loosely speaking, two of these three 
+gaussians catch their own cluster while the last gaussian only manages it to catch one single point on which it sits."
+
+"Hence to prevent singularity we simply have to prevent that the covariance matrix becomes a 0 matrix. This is done by 
+adding a very little value (in sklearn's GaussianMixture this value is set to 1e-6) to the diagonal of the covariance
+matrix. There are also other ways to prevent singularity such as noticing when a gaussian collapses and setting its 
+mean and/or covariance matrix to a new, arbitrarily high value(s)."
+Source: https://stats.stackexchange.com/questions/219302/singularity-issues-in-gaussian-mixture-model/359730#359730
+
+"""
+
 
 # tested
 def _sum_soft_assignments(A):
@@ -205,6 +227,7 @@ def _calculate_sigma_k2(X, A, S, mu_k, k):
 
     # https://stats.stackexchange.com/questions/219302/singularity-issues-in-gaussian-mixture-model/359730#359730
     # add small value to diagonal to prevent singular matrix
+    # see Note 2
     diag = np.zeros((len(mu_k), len(mu_k)))
     np.fill_diagonal(diag, 1e-6)  # same correction amount as sklearn version
 
@@ -261,7 +284,8 @@ def _calculate_prob_Xk(X, all_pi, all_mu, all_sigma, k):
     sigma_k = all_sigma[k]
     pi_k = all_pi[k]
 
-    y = multivariate_normal.pdf(X, mean=mu_k, cov=sigma_k) #, allow_singular=True)  # getting issues with singular matrix
+    y = multivariate_normal.pdf(X, mean=mu_k,
+                                cov=sigma_k)  # , allow_singular=True)  # getting issues with singular matrix
     p_Xk = y * pi_k
     return p_Xk
 
