@@ -149,8 +149,33 @@ def _calculate_mu_k(X, A, S, k):
     return mu_k
 
 
-# tested
 def _calculate_sigma_k(X, A, S, mu_k, k):
+    """
+    Version that avoids the extra efficiency in case there was an issue with it.
+
+    :param X:
+    :param A:
+    :param S:
+    :param mu_k:
+    :param k:
+    :return:
+    """
+    N = len(X)
+
+    total = np.zeros((len(mu_k), len(mu_k)))
+    for n in range(N):
+        a_nk = A[n, k]
+
+        X_minus_mu_k = (X[n] - mu_k).reshape(-1, 1)
+        result = np.matmul(X_minus_mu_k, X_minus_mu_k.T) * a_nk
+        total += result
+
+    s_k = S[k]
+    return total / s_k
+
+
+# tested
+def _calculate_sigma_k2(X, A, S, mu_k, k):
     """
     Calculates sigma parameter for cluster k.
 
@@ -206,11 +231,6 @@ def m_step(X, A):
 
         sigma_k = _calculate_sigma_k(X, A, S, mu_k, k)
         all_sigma.append(sigma_k)
-        # print('sigma_k')
-        # print(sigma_k)
-        # print('inverse')
-        # print(np.linalg.inv(sigma_k))
-        # print()
 
     return all_pi, all_mu, all_sigma
 
@@ -233,12 +253,12 @@ def _calculate_prob_Xk(X, all_pi, all_mu, all_sigma, k):
     sigma_k = all_sigma[k]
     pi_k = all_pi[k]
 
-    # https://stackoverflow.com/questions/41515522/numpy-positive-semi-definite-warning
-    min_eig = np.min(np.real(np.linalg.eigvals(sigma_k)))
-    if min_eig < 0:
-        sigma_k -= 10 * min_eig * np.eye(*sigma_k.shape)
+    # # https://stackoverflow.com/questions/41515522/numpy-positive-semi-definite-warning
+    # min_eig = np.min(np.real(np.linalg.eigvals(sigma_k)))
+    # if min_eig < 0:
+    #     sigma_k -= 10 * min_eig * np.eye(*sigma_k.shape)
 
-    y = multivariate_normal.pdf(X, mean=mu_k, cov=sigma_k, allow_singular=True)  # getting issues with singular matrix
+    y = multivariate_normal.pdf(X, mean=mu_k, cov=sigma_k) #, allow_singular=True)  # getting issues with singular matrix
     p_Xk = y * pi_k
     return p_Xk
 
@@ -312,32 +332,32 @@ def e_step(X, all_pi, all_mu, all_sigma):
         p_Xk = _calculate_prob_Xk(X, all_pi, all_mu, all_sigma, k).reshape(-1, 1)
         a_k = p_Xk / p_X
         A[:, k] = a_k[:, 0]
-    A_rounded = _round_assignments(A)
-    return A_rounded
+    # A_rounded = _round_assignments(A)
+    return A
 
-
-def _check_valid_assignment(A):
-    actual_sums = np.sum(A, axis=1)
-    expected_sums = np.ones((len(A), ))
-    np.testing.assert_allclose(actual_sums, expected_sums, atol=1e-16)
-
-
-def _round_assignments(A):
-    """
-    Takes assignments and rounds them to zero if they meet the required threshold.
-    :param A:
-    :return:
-    """
-    n_col = A.shape[1]
-    A_rounded = np.round(A, decimals=5)
-
-    # calculate the amount this column is over or under 1.0 given the rounding
-    diff = np.ones((len(A))) - np.sum(A_rounded, axis=1)
-
-    # correct for this difference by modifying the last cluster by the same amount
-    A_rounded[:, n_col-1] = (A_rounded[:, n_col-1] + diff).reshape(-1,)
-
-    # ensure assignments sum to 1.0
-    _check_valid_assignment(A_rounded)
-
-    return A_rounded
+#
+# def _check_valid_assignment(A):
+#     actual_sums = np.sum(A, axis=1)
+#     expected_sums = np.ones((len(A),))
+#     np.testing.assert_allclose(actual_sums, expected_sums, atol=1e-16)
+#
+#
+# def _round_assignments(A):
+#     """
+#     Takes assignments and rounds them to zero if they meet the required threshold.
+#     :param A:
+#     :return:
+#     """
+#     n_col = A.shape[1]
+#     A_rounded = np.round(A, decimals=5)
+#
+#     # calculate the amount this column is over or under 1.0 given the rounding
+#     diff = np.ones((len(A))) - np.sum(A_rounded, axis=1)
+#
+#     # correct for this difference by modifying the last cluster by the same amount
+#     A_rounded[:, n_col - 1] = (A_rounded[:, n_col - 1] + diff).reshape(-1, )
+#
+#     # ensure assignments sum to 1.0
+#     _check_valid_assignment(A_rounded)
+#
+#     return A_rounded

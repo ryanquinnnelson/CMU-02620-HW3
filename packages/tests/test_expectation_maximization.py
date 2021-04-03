@@ -42,6 +42,7 @@ def test__calculate_mu_k():
                   [0.2, 0.6, 0.2],
                   [0.1, 0.1, 0.8],
                   [0.2, 0.1, 0.7]])
+
     S = np.array([1.0, 1.0, 2.0])
 
     X = np.array([[6, 4],
@@ -62,7 +63,66 @@ def test__calculate_mu_k():
         np.testing.assert_allclose(actual, expected[k], atol=1e-16)  # rounding issues
 
 
-def test__calculate_sigma_k_0():
+def test__calculate_sigma_k2__0():
+    A = np.array([[0.5, 0.2, 0.3],
+                  [0.2, 0.6, 0.2],
+                  [0.1, 0.1, 0.8],
+                  [0.2, 0.1, 0.7]])
+    S = np.array([1.0, 1.0, 2.0])
+
+    X = np.array([[6, 4],
+                  [4, 1],
+                  [1, 2],
+                  [2, 1]])
+    mu_k = np.array([4.3, 2.6])
+    k = 0
+
+    expected = np.array([[3.61, 2.22],
+                         [2.22, 2.04]])
+    actual = em._calculate_sigma_k2(X, A, S, mu_k, k)
+    np.testing.assert_allclose(actual, expected, atol=1e-16)
+
+
+def test__calculate_sigma_k2__1():
+    A = np.array([[0.5, 0.2, 0.3],
+                  [0.2, 0.6, 0.2],
+                  [0.1, 0.1, 0.8],
+                  [0.2, 0.1, 0.7]])
+    S = np.array([1.0, 1.0, 2.0])
+
+    X = np.array([[6, 4],
+                  [4, 1],
+                  [1, 2],
+                  [2, 1]])
+    mu_k = np.array([3.9, 1.7])
+    k = 1
+
+    expected = np.array([[2.09, 0.97],
+                         [0.97, 1.41]])
+    actual = em._calculate_sigma_k2(X, A, S, mu_k, k)
+    np.testing.assert_allclose(actual, expected, atol=1e-16)
+
+
+def test__calculate_sigma_k2__2():
+    A = np.array([[0.5, 0.2, 0.3],
+                  [0.2, 0.6, 0.2],
+                  [0.1, 0.1, 0.8],
+                  [0.2, 0.1, 0.7]])
+    S = np.array([1.0, 1.0, 2.0])
+
+    X = np.array([[6, 4],
+                  [4, 1],
+                  [1, 2],
+                  [2, 1]])
+    mu_k = np.array([2.4, 1.85])
+    k = 2
+
+    expected = np.array([[3.04, 1.06],
+                         [1.06, 1.0275]])
+    actual = em._calculate_sigma_k2(X, A, S, mu_k, k)
+    np.testing.assert_allclose(actual, expected, atol=1e-16)
+
+def test__calculate_sigma_k__0():
     A = np.array([[0.5, 0.2, 0.3],
                   [0.2, 0.6, 0.2],
                   [0.1, 0.1, 0.8],
@@ -82,44 +142,7 @@ def test__calculate_sigma_k_0():
     np.testing.assert_allclose(actual, expected, atol=1e-16)
 
 
-def test__calculate_sigma_k_1():
-    A = np.array([[0.5, 0.2, 0.3],
-                  [0.2, 0.6, 0.2],
-                  [0.1, 0.1, 0.8],
-                  [0.2, 0.1, 0.7]])
-    S = np.array([1.0, 1.0, 2.0])
 
-    X = np.array([[6, 4],
-                  [4, 1],
-                  [1, 2],
-                  [2, 1]])
-    mu_k = np.array([3.9, 1.7])
-    k = 1
-
-    expected = np.array([[2.09, 0.97],
-                         [0.97, 1.41]])
-    actual = em._calculate_sigma_k(X, A, S, mu_k, k)
-    np.testing.assert_allclose(actual, expected, atol=1e-16)
-
-
-def test__calculate_sigma_k_2():
-    A = np.array([[0.5, 0.2, 0.3],
-                  [0.2, 0.6, 0.2],
-                  [0.1, 0.1, 0.8],
-                  [0.2, 0.1, 0.7]])
-    S = np.array([1.0, 1.0, 2.0])
-
-    X = np.array([[6, 4],
-                  [4, 1],
-                  [1, 2],
-                  [2, 1]])
-    mu_k = np.array([2.4, 1.85])
-    k = 2
-
-    expected = np.array([[3.04, 1.06],
-                         [1.06, 1.0275]])
-    actual = em._calculate_sigma_k(X, A, S, mu_k, k)
-    np.testing.assert_allclose(actual, expected, atol=1e-16)
 
 
 def test_m_step():
@@ -293,9 +316,9 @@ def test_e_step():
 
     p_X = np.sum(all_prob, axis=0).reshape(-1, 1)
 
-    expected_k0 = np.round(all_prob[0].reshape(-1, 1) / p_X, decimals=5)
-    expected_k1 = np.round(all_prob[1].reshape(-1, 1) / p_X, decimals=5)
-    expected_k2 = np.round(all_prob[2].reshape(-1, 1) / p_X, decimals=5)
+    expected_k0 = all_prob[0].reshape(-1, 1) / p_X
+    expected_k1 = all_prob[1].reshape(-1, 1) / p_X
+    expected_k2 = all_prob[2].reshape(-1, 1) / p_X
     expected = np.concatenate([expected_k0, expected_k1, expected_k2], axis=1)
 
     actual = em.e_step(X, all_pi, all_mu, all_sigma)
@@ -309,34 +332,34 @@ def test_e_step():
     np.testing.assert_allclose(np.sum(actual, axis=1).reshape(-1, 1), expected_column_totals, atol=1e-16)
 
 
-def test__check_valid_assignment__success():
-    A = np.array([[0.36007, 0.00284, 0.63709],
-                  [0.17928, 0.58114, 0.23958],
-                  [0.15136, 0.38740, 0.46124],
-                  [0.20585, 0.41395, 0.38020]])
-
-    em._check_valid_assignment(A)
-
-
-def test__check_valid_assignment__failure():
-    A = np.array([[0.36006613, 0.1, 0.63709776],
-                  [0.17927669, 0.58113916, 0.23958415],
-                  [0.15136286, 0.38740025, 0.4612369],
-                  [0.20584788, 0.41394991, 0.38020221]])
-
-    with pytest.raises(AssertionError):
-        em._check_valid_assignment(A)
-
-
-def test__round_assignments():
-    A = np.array([[0.36006613, 0.00283611, 0.63709776],
-                  [0.17927669, 0.58113916, 0.23958415],
-                  [0.15136286, 0.38740025, 0.4612369],
-                  [0.20584788, 0.41394991, 0.38020221]])
-
-    expected = np.array([[0.36007, 0.00284, 0.63709],
-                  [0.17928, 0.58114, 0.23958],
-                  [0.15136, 0.38740, 0.46124],
-                  [0.20585, 0.41395, 0.38020]])
-    actual = em._round_assignments(A)
-    np.testing.assert_allclose(actual, expected, atol=1e-16)
+# def test__check_valid_assignment__success():
+#     A = np.array([[0.36007, 0.00284, 0.63709],
+#                   [0.17928, 0.58114, 0.23958],
+#                   [0.15136, 0.38740, 0.46124],
+#                   [0.20585, 0.41395, 0.38020]])
+#
+#     em._check_valid_assignment(A)
+#
+#
+# def test__check_valid_assignment__failure():
+#     A = np.array([[0.36006613, 0.1, 0.63709776],
+#                   [0.17927669, 0.58113916, 0.23958415],
+#                   [0.15136286, 0.38740025, 0.4612369],
+#                   [0.20584788, 0.41394991, 0.38020221]])
+#
+#     with pytest.raises(AssertionError):
+#         em._check_valid_assignment(A)
+#
+#
+# def test__round_assignments():
+#     A = np.array([[0.36006613, 0.00283611, 0.63709776],
+#                   [0.17927669, 0.58113916, 0.23958415],
+#                   [0.15136286, 0.38740025, 0.4612369],
+#                   [0.20584788, 0.41394991, 0.38020221]])
+#
+#     expected = np.array([[0.36007, 0.00284, 0.63709],
+#                   [0.17928, 0.58114, 0.23958],
+#                   [0.15136, 0.38740, 0.46124],
+#                   [0.20585, 0.41395, 0.38020]])
+#     actual = em._round_assignments(A)
+#     np.testing.assert_allclose(actual, expected, atol=1e-16)
