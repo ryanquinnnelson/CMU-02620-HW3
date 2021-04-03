@@ -142,6 +142,11 @@ class GaussianMixture:
         self.sigma = None
 
     def fit_and_score(self, X):
+        """
+
+        :param X:
+        :return:
+        """
 
         # initialization
         scores = []
@@ -185,5 +190,10 @@ class GaussianMixture:
         return scores
 
     def fit(self, X):
+        """
+
+        :param X:
+        :return:
+        """
         self.fit_and_score(X)
         return self
