@@ -197,3 +197,7 @@ class GaussianMixture:
         """
         self.fit_and_score(X)
         return self
+
+    def predict_proba(self, X):
+        A = em.e_step(X, self.pi, self.mu, self.sigma)
+        return A

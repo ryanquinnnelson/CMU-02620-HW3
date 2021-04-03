@@ -227,3 +227,36 @@ def test_fit_and_score():
     assert len(model.mu) == 3
     assert len(model.sigma) == 3
     assert len(scores) > 0
+
+
+def test_predict_proba__multiple_samples():
+
+    X = np.array([[6, 4],
+                  [4, 1]])
+
+    # pi
+    all_pi = [0.25, 0.25, 0.5]
+
+    # mu
+    all_mu = [np.array([4.3, 2.6]),
+              np.array([3.9, 1.7]),
+              np.array([2.4, 1.85])]
+
+    # sigma
+    all_sigma = [np.array([[3.61, 2.22],
+                           [2.22, 2.04]]),
+                 np.array([[2.09, 0.97],
+                           [0.97, 1.41]]),
+                 np.array([[3.04, 1.06],
+                           [1.06, 1.0275]])]
+
+    expected = np.array([[1,1,1],
+                         [1,1,1]])
+
+    model = gm.GaussianMixture(K=3, epsilon=1e-3)
+    model.pi = all_pi
+    model.mu = all_mu
+    model.sigma = all_sigma
+
+    actual = model.predict_proba(X)
+    assert actual.shape == (2,3)
