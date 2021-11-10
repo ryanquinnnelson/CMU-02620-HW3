@@ -1,5 +1,5 @@
 # CMU-02620-HW3
-Spring 2021 Machine Learning for Scientists Course Project
+Spring 2021 Machine Learning for Scientists - Course Project (HW 3)
 
 ## Project Structure
 Gaussian mixture model is implemented as Python package `mixture`. 
